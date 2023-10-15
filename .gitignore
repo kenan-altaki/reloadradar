@@ -277,3 +277,4 @@ webpack-stats.json
 .tmp/
 .vscode/
 db.sqlite3
+**/migrations
