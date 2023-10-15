@@ -1,10 +1,8 @@
-# Third Party Libraries
-from core.models import Manufacturer
-
 # Django Libraries
 from django.shortcuts import render
 
-# Create your views here.
+# First Party Libraries
+from core.models import Manufacturer
 
 
 def home(request):

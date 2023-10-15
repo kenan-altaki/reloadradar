@@ -3,8 +3,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-# Create your models here.
-
 
 class Link(models.Model):
     link_type = models.CharField(max_length=32)

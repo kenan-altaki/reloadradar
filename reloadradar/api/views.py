@@ -28,7 +28,7 @@ class SupplierSerializer(serializers.ModelSerializer):
 class PricingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pricing
-        fields = ["id", "price", "retrieved"]
+        fields = ["id", "price", "retrieved", "supplier"]
 
 
 class PropellantSerializer(serializers.ModelSerializer):
