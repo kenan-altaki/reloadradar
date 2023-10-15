@@ -1,24 +1,57 @@
 # Third Party Libraries
-from core.models import Link, Supplier
+from core.models import Link, Manufacturer, Pricing, Propellant, Supplier
 from rest_framework import serializers, viewsets
 
 
-class BaseLinkSerialiser(serializers.ModelSerializer):
+class LinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Link
-        fields = ["id", "url", "link_type"]
+        fields = ["id", "link_url", "link_type"]
 
 
-# Serializers define the API representation.
-class SupplierSerializer(serializers.HyperlinkedModelSerializer):
-    urls = BaseLinkSerialiser(many=True, read_only=True)
+class ManufacturerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Manufacturer
+        fields = ["id", "name"]
+
+
+class SupplierSerializer(serializers.ModelSerializer):
+    urls = LinkSerializer(many=True, read_only=True)
 
     class Meta:
         model = Supplier
-        fields = ["id", "name", "urls"]
+        fields = ["url", "id", "name", "urls"]
 
 
-# ViewSets define the view behavior.
+class PricingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pricing
+        fields = ["id", "price", "retrieved"]
+
+
+class PropellantSerializer(serializers.ModelSerializer):
+    prices = PricingSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Propellant
+        fields = ["id", "name", "weight", "manufacturer", "prices"]
+
+
 class SupplierViewSet(viewsets.ModelViewSet):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
+
+
+class ManufacturerViewSet(viewsets.ModelViewSet):
+    queryset = Manufacturer.objects.all()
+    serializer_class = ManufacturerSerializer
+
+
+class PricingViewSet(viewsets.ModelViewSet):
+    queryset = Pricing.objects.all()
+    serializer_class = PricingSerializer
+
+
+class PropellantViewSet(viewsets.ModelViewSet):
+    queryset = Propellant.objects.all()
+    serializer_class = PropellantSerializer

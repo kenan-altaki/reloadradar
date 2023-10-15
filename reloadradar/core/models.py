@@ -8,19 +8,19 @@ from django.db import models
 
 class Link(models.Model):
     link_type = models.CharField(max_length=32)
-    url = models.URLField()
+    link_url = models.URLField()
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
 
-    def __str__(self):
-        return f"{self.link_type}: {self.url[:25]}"
-
     class Meta:
         indexes = [
             models.Index(fields=["content_type", "object_id"]),
         ]
+
+    def __str__(self):
+        return f"{self.link_type}: {self.link_url[:25]}"
 
 
 class Supplier(models.Model):
@@ -29,6 +29,33 @@ class Supplier(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class Pricing(models.Model):
+    price = models.DecimalField(decimal_places=3, max_digits=8)
+    retrieved = models.DateTimeField(auto_now_add=True)
+    price_url = models.URLField()
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.RESTRICT,
+        null=True,
+        blank=True,
+        related_name="prices",
+        related_query_name="price",
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["content_type", "object_id"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.content_object.name}: {self.price}"
 
 
 class Manufacturer(models.Model):
@@ -44,22 +71,7 @@ class Propellant(models.Model):
     weight = models.DecimalField(decimal_places=2, max_digits=10)
 
     manufacturer = models.ForeignKey(Manufacturer, on_delete=models.RESTRICT)
-
-    def __str__(self) -> str:
-        return self.name
-
-
-class Pricing(models.Model):
-    price = models.DecimalField(decimal_places=3, max_digits=8)
-    retrieved = models.DateTimeField(auto_created=True)
-    urls = GenericRelation(Link)
-
-    supplier = models.ForeignKey(
-        Supplier, on_delete=models.RESTRICT, null=True, blank=True
-    )
-    propellant = models.ForeignKey(
-        Propellant, on_delete=models.RESTRICT, null=True, blank=True
-    )
+    prices = GenericRelation(Pricing)
 
     def __str__(self) -> str:
         return self.name
