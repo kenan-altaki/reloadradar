@@ -273,5 +273,7 @@ webpack-stats.json
 .envs/*
 !.envs/.local/
 
-# My Temp Files
+# My Ignores
 .tmp/
+.vscode/
+db.sqlite3
