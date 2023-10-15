@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 # Third Party Libraries
+from api import urls as api_urls
 from core import urls as core_urls
 
 # Django Libraries
@@ -24,4 +25,5 @@ from django.urls import include, path
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include(core_urls), name="core"),
+    path("api/", include(api_urls), name="api"),
 ]
