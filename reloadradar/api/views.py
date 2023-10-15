@@ -1,6 +1,8 @@
 # Third Party Libraries
-from core.models import Link, Manufacturer, Pricing, Propellant, Supplier
 from rest_framework import serializers, viewsets
+
+# First Party Libraries
+from core.models import Link, Manufacturer, Pricing, Propellant, Supplier
 
 
 class LinkSerializer(serializers.ModelSerializer):
