@@ -1,0 +1,7 @@
+<h1>Manufacturers</h1>
+{% for man in manufacturers %}
+    <h2>{{ man.name }}</h2>
+    <ul>
+        {% for prop in man.propellant_set.all %}<li>{{ prop.name }}</li>{% endfor %}
+    </ul>
+{% endfor %}

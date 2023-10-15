@@ -22,7 +22,7 @@ repos:
     hooks:
       - id: prettier
         args: ['--tab-width', '2', '--single-quote']
-        exclude: 'reloadradar/templates/'
+        exclude: '\.*/templates/.*'
 
   - repo: https://github.com/adamchainz/django-upgrade
     rev: '1.15.0'
