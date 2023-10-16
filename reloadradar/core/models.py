@@ -68,7 +68,12 @@ class Propellant(models.Model):
     name = models.CharField(max_length=18)
     weight = models.DecimalField(decimal_places=2, max_digits=10)
 
-    manufacturer = models.ForeignKey(Manufacturer, on_delete=models.RESTRICT)
+    manufacturer = models.ForeignKey(
+        Manufacturer,
+        on_delete=models.RESTRICT,
+        related_name="propellants",
+        related_query_name="propellant",
+    )
     prices = GenericRelation(Pricing)
 
     def __str__(self) -> str:

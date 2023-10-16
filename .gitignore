@@ -278,3 +278,4 @@ webpack-stats.json
 .vscode/
 db.sqlite3
 **/migrations
+reloadradar/scraper/output/
