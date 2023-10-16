@@ -14,7 +14,7 @@ class LinkSerializer(serializers.ModelSerializer):
 class ManufacturerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Manufacturer
-        fields = ["id", "name"]
+        fields = ["url", "id", "name"]
 
 
 class SupplierSerializer(serializers.ModelSerializer):
@@ -36,7 +36,7 @@ class PropellantSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Propellant
-        fields = ["id", "name", "weight", "manufacturer", "prices"]
+        fields = ["url", "id", "name", "weight", "manufacturer", "prices"]
 
 
 class SupplierViewSet(viewsets.ModelViewSet):
@@ -47,11 +47,6 @@ class SupplierViewSet(viewsets.ModelViewSet):
 class ManufacturerViewSet(viewsets.ModelViewSet):
     queryset = Manufacturer.objects.all()
     serializer_class = ManufacturerSerializer
-
-
-class PricingViewSet(viewsets.ModelViewSet):
-    queryset = Pricing.objects.all()
-    serializer_class = PricingSerializer
 
 
 class PropellantViewSet(viewsets.ModelViewSet):
