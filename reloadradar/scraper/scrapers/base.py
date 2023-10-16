@@ -54,6 +54,7 @@ class Scraper:
 
     def find_product(self, name: str):
         manufacturer = None
+        name = name.upper().replace("VIHTAVOURI", "VIHTAVUORI")
         for _man in Manufacturer.objects.all():
             if _man.name.lower() in name.lower():
                 manufacturer = _man
@@ -137,6 +138,7 @@ class Scraper:
                     data_list.append(row)
 
             for item in data_list:
+                print(f"Importing {item=}")
                 Propellant.objects.get_or_create(
                     name=item["name"],
                     weight=item["weight"] or 454,
