@@ -66,7 +66,7 @@ class Manufacturer(models.Model):
 
 class Propellant(models.Model):
     name = models.CharField(max_length=18)
-    weight = models.DecimalField(decimal_places=2, max_digits=10)
+    weight = models.DecimalField(decimal_places=2, max_digits=10, default=454)
 
     manufacturer = models.ForeignKey(
         Manufacturer,
@@ -75,6 +75,15 @@ class Propellant(models.Model):
         related_query_name="propellant",
     )
     prices = GenericRelation(Pricing)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                models.functions.Lower("name").desc(),
+                "weight",
+                name="name_weight_unique",
+            ),
+        ]
 
     def __str__(self) -> str:
         return self.name

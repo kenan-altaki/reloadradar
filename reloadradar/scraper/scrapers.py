@@ -2,6 +2,7 @@
 import csv
 import os
 from dataclasses import dataclass
+from decimal import Decimal
 from pathlib import Path
 from re import sub
 
@@ -13,7 +14,7 @@ from django.apps import apps
 from django.utils import timezone
 
 # First Party Libraries
-from core.models import Link, Manufacturer, Pricing
+from core.models import Link, Manufacturer, Pricing, Propellant
 
 
 @dataclass
@@ -26,6 +27,12 @@ class Scraper:
         self.product_model = apps.get_model("core", self.link.link_type)
         self.product_name = self.product_model.__name__.lower()
         self.supplier = self.link.content_object
+
+        self.base_location = Path("./reloadradar/scraper/output")
+        self.file_location = (
+            self.base_location / self.product_name / str(self.supplier.id)
+        )
+
         print(f"{self} completed PostInit.")
 
     def __str__(self) -> str:
@@ -47,9 +54,11 @@ class Scraper:
         getattr(self, "process_" + self.product_name + "_list")()
 
     def find_product(self, name: str):
+        manufacturer = None
         for _man in Manufacturer.objects.all():
             if _man.name.lower() in name.lower():
                 manufacturer = _man
+                print(f"{manufacturer=} found for {name}")
                 break
 
         if manufacturer:
@@ -70,12 +79,8 @@ class Scraper:
         if not self.ready:
             self.get_response()
 
-        base_location = Path("./reloadradar/scraper/output")
-        file_location = base_location / self.product_name / str(self.supplier.id)
-        file_path = file_location / f"{timezone.now().strftime('%Y-%m-%d-%H')}.csv"
-
-        os.makedirs(file_location, exist_ok=True)
-
+        file_path = self.file_location / f"{timezone.now().strftime('%Y-%m-%d-%H')}.csv"
+        os.makedirs(self.file_location, exist_ok=True)
         with open(file_path, "a", newline="") as csv_file:
             fieldnames = ["name", "price", "url"]
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
@@ -87,14 +92,12 @@ class Scraper:
                 writer.writerow(data)
 
     def import_last_csv(self):
-        base_location = Path("./reloadradar/scraper/output")
-        file_location = base_location / self.product_name / str(self.supplier.id)
-
-        files = os.listdir(file_location)
+        files = os.listdir(self.file_location)
         file_paths = [
-            os.path.join(file_location, file)
+            os.path.join(self.file_location, file)
             for file in files
-            if os.path.isfile(os.path.join(file_location, file))
+            if "error" not in file
+            and os.path.isfile(os.path.join(self.file_location, file))
         ]
         file_paths.sort(key=lambda x: os.path.getmtime(x), reverse=True)
         if file_paths:
@@ -114,6 +117,75 @@ class Scraper:
         else:
             print("No files found in the directory")
 
+    def import_new_propellants(self):
+        files = os.listdir(self.file_location)
+        file_paths = [
+            os.path.join(self.file_location, file)
+            for file in files
+            if "propellants" in file
+            and os.path.isfile(os.path.join(self.file_location, file))
+        ]
+        file_paths.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+        if file_paths:
+            last_updated_file = file_paths[0]
+            print("Last updated file:", last_updated_file)
+            data_list = []
+
+            # Open and read the CSV file
+            with open(last_updated_file) as file:
+                csv_reader = csv.DictReader(file)
+                for row in csv_reader:
+                    data_list.append(row)
+
+            for item in data_list:
+                Propellant.objects.get_or_create(
+                    name=item["name"],
+                    weight=item["weight"] or 454,
+                    manufacturer=Manufacturer.objects.get(
+                        name__icontains=item["manufacturer"]
+                    ),
+                )
+        else:
+            print("No files found in the directory")
+
+    def log_to_error_file(self, line: dict):
+        file_path = (
+            self.file_location / f"{timezone.now().strftime('%Y-%m-%d-%H')}-errors.csv"
+        )
+        os.makedirs(self.file_location, exist_ok=True)
+        with open(file_path, "a", newline="") as csv_file:
+            fieldnames = line.keys()
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+
+            if os.path.getsize(file_path) == 0:
+                writer.writeheader()
+
+            writer.writerow(line)
+
+    def process_propellant_list(self):
+        for item in self.propellant_list:
+            print(f"Processing {item['name']=}")
+
+            propellant = self.find_product(item["name"])
+
+            if not propellant:
+                print(f"Cannot find {item=}")
+                self.log_to_error_file(item)
+                continue
+
+            last_price = self.get_last_pricing(propellant)
+
+            if not last_price or (
+                last_price and not last_price.price == Decimal(item["price"])
+            ):
+                print(f"Capturing new {item['price']=} for {propellant=}")
+                Pricing.objects.create(
+                    content_object=propellant,
+                    price=item["price"],
+                    supplier=self.supplier,
+                    price_url=item["url"],
+                )
+
 
 class SafariOutdoorScraper(Scraper):
     def parse_propellant_list(self):
@@ -126,44 +198,6 @@ class SafariOutdoorScraper(Scraper):
             name: str = item.find("a.product-item-link", first=True).text
 
             self.propellant_list.append({"name": name, "price": price, "url": url})
-
-    def process_propellant_list(self):
-        for name, price, url in self.propellant_list:
-            print(f"Processing {name=}")
-
-            propellant = self.find_product(name)
-
-            if not propellant:
-                print(f"Unable to match {name=} to anything")
-                propellant_name = input("What is the name of this item")
-                propellant_weight = input("What is the weight of this item")
-                propellant_manufacturer = input("Who is the manufacturer")
-
-                for _prop in self.product_model.objects.all():
-                    if _prop.name.lower() in propellant_name.lower():
-                        propellant = _prop
-                        break
-                    else:
-                        propellant = self.product_model.create(
-                            name=propellant_name,
-                            weight=propellant_weight,
-                            manufacturer=Manufacturer.objects.get(
-                                name__icontains=propellant_manufacturer
-                            ),
-                        )
-
-            if not propellant:
-                raise ValueError(f"{name} cannot be matched")
-
-            last_price = self.get_last_pricing(propellant)
-
-            if not last_price or (last_price and not last_price.price == price):
-                Pricing.objects.create(
-                    content_object=propellant,
-                    price=price,
-                    supplier=self.supplier,
-                    price_url=url,
-                )
 
 
 class ZimbiScraper(Scraper):
@@ -179,46 +213,3 @@ class ZimbiScraper(Scraper):
             name: str = item.find("h2", first=True).text
 
             self.propellant_list.append({"name": name, "price": price, "url": url})
-
-    def process_propellant_list(self):
-        for name, price, url in self.propellant_list:
-            print(f"Processing {name=}")
-
-            propellant = self.find_product(name)
-
-            if not propellant:
-                print(f"Unable to match {name=} to anything")
-                propellant_name = input(
-                    "What is the name of this item? (leave blank to skip): "
-                )
-                if not propellant_name:
-                    continue
-
-                propellant_weight = input("What is the weight of this item? ")
-                propellant_manufacturer = input("Who is the manufacturer? ")
-
-                for _prop in self.product_model.objects.all():
-                    if _prop.name.lower() in propellant_name.lower():
-                        propellant = _prop
-                        break
-                    else:
-                        propellant = self.product_model.objects.create(
-                            name=propellant_name,
-                            weight=propellant_weight,
-                            manufacturer=Manufacturer.objects.get(
-                                name__icontains=propellant_manufacturer
-                            ),
-                        )
-
-            if not propellant:
-                raise ValueError(f"{name} cannot be matched")
-
-            last_price = self.get_last_pricing(propellant)
-
-            if not last_price or (last_price and not last_price.price == price):
-                Pricing.objects.create(
-                    content_object=propellant,
-                    price=price,
-                    supplier=self.supplier,
-                    price_url=url,
-                )
