@@ -1,7 +1,7 @@
 # Django Libraries
 from django.contrib import admin
 
-# First Party Libraries
+# Project Modules
 from core.models import Link, Manufacturer, Pricing, Propellant, Supplier
 
 admin.site.register(Manufacturer)

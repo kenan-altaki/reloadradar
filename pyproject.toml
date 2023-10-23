@@ -18,3 +18,26 @@ django-filter = "^23.3"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+src_paths = "reloadradar"
+
+sections = [
+    "FUTURE",
+    "STDLIB",
+    "THIRDPARTY",
+    "DJANGO",
+    "DATASCIENCE",
+    "FIRSTPARTY",
+    "LOCALFOLDER",
+]
+known_django = "django"
+known_datascience = "pandas,numpy"
+import_heading_future = "Future Libraries"
+import_heading_stdlib = "Standard Libraries"
+import_heading_thirdparty = "Third Party Libraries"
+import_heading_django = "Django Libraries"
+import_heading_datascience = "Data Science Libraries"
+import_heading_firstparty = "Project Modules"
+import_heading_localfolder = "App Modules"

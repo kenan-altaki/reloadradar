@@ -1,7 +1,7 @@
 # Third Party Libraries
 from rest_framework import serializers, viewsets
 
-# First Party Libraries
+# Project Modules
 from core.models import Link, Manufacturer, Pricing, Propellant, Supplier
 
 

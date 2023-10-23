@@ -4,7 +4,7 @@ from rest_framework import routers
 # Django Libraries
 from django.urls import include, path
 
-# Local Libraries
+# App Modules
 from .views import ManufacturerViewSet, PropellantViewSet, SupplierViewSet
 
 # Routers provide an easy way of automatically determining the URL conf.

@@ -17,7 +17,7 @@ Including another URLconf
 # Django Libraries
 from django.urls import path
 
-# Local Libraries
+# App Modules
 from .views import home, propellant_overview
 
 urlpatterns = [

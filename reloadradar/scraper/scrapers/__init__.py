@@ -1,7 +1,7 @@
 # Standard Libraries
 from re import sub
 
-# Local Libraries
+# App Modules
 from .base import Scraper
 
 

@@ -12,7 +12,7 @@ from requests_html import HTMLSession
 from django.apps import apps
 from django.utils import timezone
 
-# First Party Libraries
+# Project Modules
 from core.models import Link, Manufacturer, Pricing, Propellant
 
 
